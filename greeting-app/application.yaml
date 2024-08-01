@@ -8,7 +8,7 @@ spec:
     namespace: default
     server: https://kubernetes.default.svc
   source:
-    path: greeting-app
+    path: greeting-app/helm
     repoURL: https://github.com/mtumilowicz/argocd-workshop.git
     targetRevision: HEAD
   project: default
