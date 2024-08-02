@@ -23,6 +23,8 @@
             * https://localhost:8080
                 * login: admin
                 * password from previous substep
+                    * once you changed the password => delete the argocd-initial-admin-secret from the Argo CD namespace
+                        * no other purpose than to store the initially generated password
         1. verify that there is nothing in `Applications`
     * adding app
         1. checkout this app: https://github.com/mtumilowicz/helm-workshop
@@ -84,3 +86,38 @@
 
 ## argoCD
 * is a declarative, GitOps continuous delivery tool for Kubernetes
+* follows GitOps pattern of using Git repositories as the source of truth for defining the desired application state
+* Kubernetes manifests can be specified in several ways:
+    * kustomize applications
+    * helm charts
+    * jsonnet files
+    * Plain directory of YAML/json manifests
+    * Any custom config management tool configured as a config management plugin
+* automates the deployment of the desired application states in the specified target environments
+    * can track updates to branches, tags, or pinned to a specific version of manifests at a Git commit
+* implemented as a Kubernetes controller
+    * continuously monitors running applications and compares the current, live state against the desired target state (Git repo)
+* deployed application whose live state deviates from the target state is considered `OutOfSync`
+    * argoCD provides facilities to automatically or manually sync the live state back to the desired target state
+* helm
+    * values
+        * As of v2.6, values files can be sourced from a separate repository than the Helm chart by taking advantage of multiple sources for Applications
+            * is a beta feature
+        * declarative syntax
+            ```
+            source:
+              helm:
+                valueFiles:
+                - values-production.yaml
+            ```
+    * release name
+        * overriding the Helm release name might cause problems when the chart you are deploying is using the app.kubernetes.io/instance label
+        * declarative syntax
+            ```
+            source:
+                helm:
+                  releaseName: myRelease
+            ```
+    * hooks
+        * Argo CD cannot know if it is running a first-time "install" or an "upgrade" - every operation is a "sync'.
+            * apps that have pre-install and pre-upgrade will have those hooks run at the same time
