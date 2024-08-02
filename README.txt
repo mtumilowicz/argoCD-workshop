@@ -9,6 +9,37 @@
 ## preface
 * goals of this workshop
 * workshop plan
+    * installing argocd
+        1. run k8s locally with docker desktop
+        1. install argocd
+            ```
+            kubectl create namespace argocd
+            kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+            ```
+        1. log into argocd
+            * `kubectl port-forward svc/argocd-server -n argocd 8080:443`
+            * `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo`
+                * it is password
+            * https://localhost:8080
+                * login: admin
+                * password from previous substep
+        1. verify that there is nothing in `Applications`
+    * adding app
+        1. checkout this app: https://github.com/mtumilowicz/helm-workshop
+            * create 1.1 docker image with `greeting` endpoint
+            * create 1.2 docker image with `greeting2` endpoint
+            * command: `./gradlew bootBuildImage`
+        1. `kubectl apply -f greeting-app/application.yaml`
+        1. verify that there is app added in `Applications`
+        1. http://localhost:31234/app/greeting
+            * should return `greeting`
+    * sync
+        1. `push commit that changes deployment.image.version`
+            * from `1.1` and `1.2`
+        1. wait few seconds
+        1. verify that argocd is in sync for that App
+        1. http://localhost:31234/app/greeting
+            * should return `greeting2`
 
 ## gitOps
 * problem: configuration still feels disconnected from the live system
