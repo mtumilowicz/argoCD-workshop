@@ -3,7 +3,7 @@ deployment:
   replicaCount: 1
   image:
     app: greeting-app
-    version: 1.1
+    version: 1.2
     pullPolicy: IfNotPresent
 
 service:
