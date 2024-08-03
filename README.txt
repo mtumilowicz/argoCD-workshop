@@ -93,6 +93,37 @@
     * jsonnet files
     * Plain directory of YAML/json manifests
     * Any custom config management tool configured as a config management plugin
+* applications, projects and settings can be defined declaratively using Kubernetes manifests
+    * can be updated using kubectl apply, without needing to touch the argocd command-line tool
+        * `kubectl apply -n argocd -f application.yaml`
+    * Application CRD is the Kubernetes resource object representing a deployed application instance in an environment
+        * example
+            ```
+            apiVersion: argoproj.io/v1alpha1
+            kind: Application
+            metadata:
+              name: greeting-app
+              namespace: argocd
+            spec:
+              destination: // reference to the target cluster and namespace
+                namespace: default
+                server: https://kubernetes.default.svc
+              source: // reference to the desired state in Git
+                path: greeting-app/helm
+                repoURL: https://github.com/mtumilowicz/argocd-workshop.git
+                targetRevision: HEAD
+              project: default
+              syncPolicy:
+                automated:
+                  prune: true
+                  selfHeal: true
+            ```
+        * Argo CD is able to manage itself since all settings are represented by Kubernetes manifests
+            * create Kustomize based application which uses base Argo CD manifests from https://github.com/argoproj/argo-cd and apply required changes on top
+    * AppProject CRD is the Kubernetes resource object representing a logical grouping of applications
+        * enforce role-based access control (RBAC)
+            * ensures that team A cannot accidentally modify the applications managed by team B
+        * example: frontend, backend, data-services, and infrastructure
 * automates the deployment of the desired application states in the specified target environments
     * can track updates to branches, tags, or pinned to a specific version of manifests at a Git commit
 * implemented as a Kubernetes controller
