@@ -8,6 +8,16 @@
 
 ## preface
 * goals of this workshop
+    * introduction to GitOps and ArgoCD
+        * principles and benefits of GitOps
+        * how ArgoCD implements these principles to manage Kubernetes deployments
+    * hands-on installation and setup
+        * install and configure ArgoCD on a local Kubernetes cluster running with Docker Desktop
+    * application deployment with ArgoCD
+    * continuous deployment and syncing
+        * explore how to automatically sync application states from a Git repository to a Kubernetes cluster
+    * best practices and advanced features
+        * automated sync policies and notifications
 * workshop plan
     * installing argocd
         1. run k8s locally with docker desktop
