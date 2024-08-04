@@ -5,6 +5,9 @@
     * https://about.gitlab.com/topics/gitops/
     * https://codefresh.io/learn/gitops/
     * https://chatgpt.com/
+    * https://www.harness.io/blog/what-is-argo-cd
+    * https://devtron.ai/what-is-argo-cd-the-gitops-tool-for-kubernetes
+    * https://medium.com/@akulamanojkumar988/argo-cd-a909b5c62acb
 
 ## preface
 * goals of this workshop
@@ -81,6 +84,12 @@
         * may not necessarily be centralized in a single repository
         * uses configuration management tools (like Ansible)
         * continuous reconciliation may not be a primary focus
+* traditional CD and GitOps differ on the core principles of push and pull-based deployments
+    * most CI/CD processes work on a push mechanism
+        * things move to their respective destination at the trigger of an event
+        * example: developer has to configure the clusters using tools like Kubectl and Helm in the pipeline to apply changes
+    * pull-based CD mechanism means the destination triggers an event to pull the data from the source(git) to deploy at the destination
+        ![alt text](img/push-vs-pull.png)
 * cons
     * automating git commits may create conflicts
         * multiple CI processes can cause conflicts when writing to the same repository
@@ -96,6 +105,7 @@
 
 ## argoCD
 * is a declarative, GitOps continuous delivery tool for Kubernetes
+    * turns "ClickOps" into GitOps
 * follows GitOps pattern of using Git repositories as the source of truth for defining the desired application state
     * Kubernetes manifests can be specified in several ways
         * helm
@@ -124,25 +134,17 @@
                 * Argo CD cannot know if it is running a first-time "install" or an "upgrade" - every operation is a "sync'.
                     * apps that have pre-install and pre-upgrade will have those hooks run at the same time
         * other: kustomize, jsonnet, plain directory of YAML/json manifests, custom
-* components
-    * API Server
-        * provides endpoints for managing and querying applications, repositories, projects, and other resource
-    * Repository Server
-        * manages interactions with Git repositories
-            * argocd-repo-server is responsible for cloning Git repository, keeping it up to date and generating manifests using the appropriate tool
-                * clones the repository into /tmp (or the path specified in the TMPDIR env variable)
-                    * Pod might run out of disk space if it has too many repositories or if the repositories have a lot of files
-                        * mount a persistent volume
-                * Every 3m (by default) Argo CD checks for changes to the app manifests.
-                    * assumes by default that manifests only change when the repo changes
-                    * change this duration using the `timeout.reconciliation` setting in the argocd-cm ConfigMap
-                    * To eliminate this delay from polling, the API server can be configured to receive webhook events
-                        * supported Git webhook notifications from GitHub, GitLab, Bitbucket, Bitbucket Server and Gogs
-    * Application Controller
-        * specific controller that handles the reconciliation of applications
 * automates the deployment of the desired application states in the specified target environments
     * can track updates to branches, tags, or pinned to a specific version of manifests at a Git commit
+    * every 3m (by default) Argo CD checks for changes to the app manifests
+        * to eliminate delay from polling, the API server can be configured to receive webhook events
+            * example: Git webhook notifications from GitHub
+        * assumes by default that manifests only change when the repo changes
+        * change this duration using the `timeout.reconciliation` setting in the argocd-cm ConfigMap
 * implemented as a Kubernetes controller
+    * Kubernetes faces challenges with the traditional CD mechanism
+        * CI/CD tools, like Jenkins, sit outside the cluster
+        * Argo CD sits inside the cluster
     * continuously monitors running applications and compares the current, live state against the desired target state (Git repo)
         * deployed application whose live state deviates from the target state is considered `OutOfSync`
             * argoCD provides facilities to automatically or manually sync the live state back to the desired target state
@@ -198,6 +200,24 @@
                 * restrict what kinds of objects may or may not be deployed (e.g. RBAC, CRDs, DaemonSets, NetworkPolicy etc...)
                 * defining project roles to provide application RBAC (bound to OIDC groups and/or JWT tokens)
     * other: ConfigMap, Secret, Cluster etc
+* components
+    * API Server
+        * like a Kubernetes API server
+        * primary functionalities
+            * application deployment and management
+            * executing rollback on user-defined actions
+            * managing cluster credentials stored in K8s secrets
+            * enforcing RBAC
+            * Git Webhooks
+    * Repository Server
+        * manages interactions with Git repositories
+        * responsible for cloning Git repository, keeping it up to date and generating manifests using the appropriate tool
+            * makes a local cache of the application manifest and Git repositories
+            * clones the repository into /tmp (or the path specified in the TMPDIR env variable)
+                * Pod might run out of disk space if it has too many repositories or if the repositories have a lot of files
+                    * mount a persistent volume
+    * Application Controller
+        * handles the reconciliation of applications
 * can display a badge with health and sync status for any application
 * notification subscriptions
     * example: slack
@@ -211,7 +231,7 @@
 * best practices
     * clean separation of application code vs. application config
         * separate Git repository to hold your Kubernetes manifests
-        * keeping the config separate from your application source code
+            * deployment files change independently from the source code
         * pros
             * modify just the manifests without triggering an entire CI build
                 * example: bump the number of replicas in a Deployment spec
