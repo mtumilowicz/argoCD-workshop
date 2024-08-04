@@ -22,6 +22,7 @@
     * best practices and advanced features
         * automated sync policies and notifications
 * workshop plan
+    * it may be interesting to first take a look here: https://github.com/mtumilowicz/go-continuous-deployment-workshop 
     * installing argocd
         1. run k8s locally with docker desktop
         1. install argocd
